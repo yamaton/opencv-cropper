@@ -43,9 +43,8 @@ def sort_circles():
     assert len(circles) >= 4
     points = np.asarray(circles[-4:])
     key = functools.cmp_to_key(np.cross)
-    # np.apply_along_axis does not work... Why?
     vecs = points[1:] - points[0]
-    xs = [key(p) for p in points[1:] - points[0]]
+    xs = np.apply_along_axis(key, 1, vecs)
     indices = np.argsort(xs)
     indices = [0] + list(1 + indices)
     circles = [tuple(p) for p in points[indices]]
