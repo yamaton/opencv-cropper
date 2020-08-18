@@ -9,6 +9,8 @@ import cv2 as cv
 
 Point2D = Tuple[int, int]
 
+TOGGLE_KEY = 32   # 32: space key
+
 COLOR_NORMAL = (255, 102, 144)
 COLOR_SELECTED = (102, 102, 255)
 ALPHA = 0.4
@@ -21,7 +23,7 @@ points: List[Point2D] = []
 idx_active: Optional[int] = None
 
 
-def close_enough(p1: Point2D, p2: Point2D):
+def close_enough(p1: Point2D, p2: Point2D) -> bool:
     x1, y1 = p1
     x2, y2 = p2
     res = np.hypot(x1 - x2, y1 - y2) < CLOSE_ENOUGH_DIST
@@ -117,6 +119,36 @@ def edit_circle(event, x, y, flags, param):
     img = current_img_mat()
 
 
+def four_point_perspective_transform(img, points):
+    """4-point perspective transform
+
+    https://www.pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
+    """
+    assert len(points) == 4
+
+    def _dist(a: Point2D, b: Point2D) -> float:
+        return np.hypot(a[0] - b[0], a[1] - b[1])
+
+    tl, tr, br, bl = points
+    w_A = _dist(tl, tr)
+    w_B = _dist(bl, br)
+    width = int(max(w_A, w_B))
+
+    h_A = _dist(tl, bl)
+    h_B = _dist(tr, br)
+    height = int(max(h_A, h_B))
+
+    src = np.asarray(points, dtype=np.float32)
+    dst = np.array(
+        [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1],],
+        dtype=np.float32,
+    )
+
+    mat = cv.getPerspectiveTransform(src, dst)
+    dst_img = cv.warpPerspective(img, mat, (width, height))
+    return dst_img
+
+
 p = pathlib.Path(".") / "lenna.png"
 assert p.exists()
 IMG_ORIG = cv.imread(p.as_posix())
@@ -125,6 +157,14 @@ cv.namedWindow("image")
 cv.setMouseCallback("image", edit_circle)
 while 1:
     cv.imshow("image", img)
-    if cv.waitKey(1) == ord("q"):
+    k = cv.waitKey(1)
+    if k == ord("q"):
         break
+    # Open new window giving bird's eye view
+    elif k == TOGGLE_KEY and len(points) == 4:
+        dst_img = four_point_perspective_transform(img, points)
+        cv.imshow("warped", dst_img)
+        if cv.waitKey(-1) == TOGGLE_KEY:
+            cv.destroyWindow("warped")
+
 cv.destroyAllWindows()
