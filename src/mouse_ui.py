@@ -10,7 +10,9 @@ import cv2 as cv
 
 Point2D = Tuple[int, int]
 
-TOGGLE_KEY = 32   # 32: space key
+SPACE_KEY = 32  #  32: space key
+DELETE_KEY = 255  # 255: delete key
+BS_KEY = 8  #   8: backspace key
 
 COLOR_NORMAL = (255, 102, 144)
 COLOR_SELECTED = (102, 102, 255)
@@ -150,9 +152,15 @@ def four_point_perspective_transform(img, points):
     return dst_img
 
 
+def reset():
+    global img
+    global points
+    points = []
+    img = current_img_mat()
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', '--input', help="Load image")
+parser.add_argument("-i", "--input", help="Load image")
 args = parser.parse_args()
 
 if args.input:
@@ -170,11 +178,20 @@ while 1:
     k = cv.waitKey(1)
     if k == ord("q"):
         break
+
     # Open new window giving bird's eye view
-    elif k == TOGGLE_KEY and len(points) == 4:
+    elif k == SPACE_KEY and len(points) == 4:
         dst_img = four_point_perspective_transform(IMG_ORIG, points)
         cv.imshow("warped", dst_img)
-        if cv.waitKey(-1) == TOGGLE_KEY:
+        k = cv.waitKey(-1)
+        if k == SPACE_KEY:
             cv.destroyWindow("warped")
+        elif k in (BS_KEY, DELETE_KEY):
+            cv.destroyWindow("warped")
+            reset()
+
+    # Reset point placement
+    elif k == BS_KEY or k == DELETE_KEY:
+        reset()
 
 cv.destroyAllWindows()
