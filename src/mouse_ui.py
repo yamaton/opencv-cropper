@@ -162,7 +162,7 @@ while 1:
         break
     # Open new window giving bird's eye view
     elif k == TOGGLE_KEY and len(points) == 4:
-        dst_img = four_point_perspective_transform(img, points)
+        dst_img = four_point_perspective_transform(IMG_ORIG, points)
         cv.imshow("warped", dst_img)
         if cv.waitKey(-1) == TOGGLE_KEY:
             cv.destroyWindow("warped")
