@@ -1,5 +1,6 @@
 # pylint: disable=E1126
 
+import argparse
 import pathlib
 import functools
 from typing import Optional, List, Tuple, Iterable
@@ -149,7 +150,16 @@ def four_point_perspective_transform(img, points):
     return dst_img
 
 
-p = pathlib.Path(".") / "lenna.png"
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--input', help="Load image")
+args = parser.parse_args()
+
+if args.input:
+    p = pathlib.Path(args.input)
+else:
+    p = pathlib.Path(__file__).parent.parent / "img" / "lenna.png"
+
 assert p.exists()
 IMG_ORIG = cv.imread(p.as_posix())
 img = IMG_ORIG.copy()
